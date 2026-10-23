@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Painel de produção · Congelado</title>
+<title>Produção Refrio</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0d1117"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Produção Refrio"><script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#f4f6f8;--pn:#fff;--ln:#d5dbe3;--tx:#14202b;--mu:#5b6b7c;--kb:#eef2f6;--a1:#1d7fb8;--a2:#1f9d5c;--b1:rgba(29,127,184,.16);--b2:rgba(31,157,92,.16);--z:#5b6b7c;--wn:#b36b00;--cok:#0a9e4d;--cmid:#b87300;--clow:#d6203f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -48,10 +50,11 @@ td.al{animation:pl 1.5s ease-in-out infinite;color:var(--clow)}
 .md textarea,.md select,.md input{width:100%;background:var(--kb);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:8px;font-size:14px}
 .md textarea{height:64px}
 @media (max-width:1100px){html,body{overflow:auto}#app{height:auto}#grid{grid-template-columns:1fr}.pn{min-height:0}.list{overflow-x:auto;-webkit-overflow-scrolling:touch}table{min-width:560px;font-size:13px}.cp{min-width:70px}}
+.lg{height:clamp(34px,6vh,64px);background:#fff;border-radius:8px;padding:3px 8px}
 </style></head><body>
 <div id="app">
  <div class="top">
-  <div class="tl"><h1>Painel de produção</h1><span class="mu">Congelado · <b id="tn"></b> <span id="dm"></span></span></div>
+  <div class="tl" style="display:flex;align-items:center;gap:12px"><img src="logo-refrio.jpg" alt="Refrio" class="lg"><div><h1>Painel de produção</h1><span class="mu">Congelado · <b id="tn"></b> <span id="dm"></span></span></div></div>
   <div class="chips">
    <div class="cp"><i>Meta por hora</i><b id="mg"></b></div>
    <div class="cp"><i>Hora atual</i><b id="ck">--:--</b></div>
@@ -83,8 +86,7 @@ td.al{animation:pl 1.5s ease-in-out infinite;color:var(--clow)}
  <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" id="sv">Salvar</button><button class="btn" id="cl">Cancelar</button></div>
 </div></div>
 <script>
-/* COLE AQUI o endereço do Apps Script (termina em /exec) */
-var API="https://script.google.com/macros/s/AKfycbxEIvCh75VeoaKEZitVwjxcb7alJ7crT34NROLgUix6ToB7r0TQ6HHXlmy8N2OWVBfP9A/exec";
+if(typeof API==="undefined")var API="";
 var DEF="81201,82624,82737,82878,82894,83186,83493,83543,83760,83748,83975,84029,84023,84061,84044,13539,83686";
 function ld(k,d){try{var v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}}
 function sv(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -183,7 +185,7 @@ function render(){
  tick()}
 function tick(){
  var d=new Date(),mm=d.getHours()*60+d.getMinutes();
- document.getElementById("tn").textContent=mm>=360&&mm<840?"Turno 1":(mm>=840&&mm<1350?"Turno 2":"Turno 3");
+ document.getElementById("tn").textContent=mm>=360&&mm<860?"Turno 1":(mm>=860&&mm<1350?"Turno 2":"Turno 3");
  document.getElementById("ck").textContent=hm(d);
  var u=document.getElementById("up"),c=document.getElementById("cu");
  if(!loadedAt){u.textContent="--:--";c.className="cp";return}
@@ -263,7 +265,7 @@ document.getElementById("lk").onclick=function(){
  if(!API){alert("O endereço do servidor ainda não foi configurado no arquivo.");return}
  var k=prompt("Senha de atualização:");if(!k)return;
  fetch(API,{method:"POST",body:JSON.stringify({key:k,part:"ping",data:{}})}).then(function(r){return r.json()}).then(function(j){if(j.ok){KEY=k;sv("key",k);applyPerm();lastSig="";pull()}else alert("Senha incorreta.")}).catch(function(){alert("Não consegui falar com o servidor.")})};
-applyPerm();pull();setInterval(pull,60000);
+applyPerm();pull();setInterval(pull,20000);document.addEventListener("visibilitychange",function(){if(!document.hidden)pull()});if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
 setInterval(tick,15000);
 setInterval(function(){if((PG[1]||1)>1||(PG[2]||1)>1){pg[1]++;pg[2]++;render()}},8000);
 var RW=window.innerWidth;window.addEventListener("resize",function(){if(window.innerWidth!==RW){RW=window.innerWidth;render()}});
