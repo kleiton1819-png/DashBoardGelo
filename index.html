@@ -51,6 +51,7 @@ td.al{animation:pl 1.5s ease-in-out infinite;color:var(--clow)}
 .md textarea{height:64px}
 @media (max-width:1100px){html,body{overflow:auto}#app{height:auto}#grid{grid-template-columns:1fr}.pn{min-height:0}.list{overflow-x:auto;-webkit-overflow-scrolling:touch}table{min-width:560px;font-size:13px}.cp{min-width:70px}}
 .lg{height:clamp(34px,6vh,64px);background:#fff;border-radius:8px;padding:3px 8px}
+.mr{display:grid;grid-template-columns:90px 1fr 32px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--ln);font-size:14px}.mr.hl{background:rgba(255,177,0,.28)}.mr b{font-weight:normal;color:var(--mu)}.mx{color:var(--clow);cursor:pointer;text-align:center;font-size:16px}.btn.on{border-color:var(--a1);color:var(--a1)}
 </style></head><body>
 <div id="app">
  <div class="top">
@@ -75,9 +76,16 @@ td.al{animation:pl 1.5s ease-in-out infinite;color:var(--clow)}
  <h3 style="margin:0">Configurações</h3>
  <label>Tema</label><select id="c-th"><option value="dark">Modo escuro</option><option value="light">Modo claro</option></select>
  <label>Endereços do Congelado (início do endereço, separados por vírgula)</label><input id="c-pf">
- <label>Matrículas da Separação (separadas por vírgula)</label><textarea id="c-m1"></textarea>
+ <label>Matrículas</label>
+ <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap"><button class="btn" id="mt1">Separação</button><button class="btn" id="mt2">Conferência e remonte</button></div>
+ <textarea id="mp" placeholder="Cole várias matrículas, separadas por espaço, linha ou vírgula"></textarea>
+ <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap"><button class="btn" id="ma">Incluir matrículas</button><span class="mu" id="mm" style="font-size:12px"></span></div>
+ <input id="mq" placeholder="Buscar matrícula ou nome" style="margin-top:8px">
+ <div class="mu" id="mc" style="margin:6px 0 2px;font-size:12px"></div>
+ <div id="ml" style="max-height:200px;overflow:auto;border:1px solid var(--ln);border-radius:8px"></div>
+ <div class="mu" style="font-size:12px;margin-top:4px">Na aba Conferência e remonte, lista vazia significa todas as matrículas do relatório. Cada matrícula só pode aparecer uma vez em cada lista.</div>
  <label>Meta da Separação (caixas por hora)</label><input id="c-g1" type="number" min="1">
- <label>Matrículas da Conferência e remonte (em branco: todas as do relatório)</label><textarea id="c-m2"></textarea>
+ 
  <label>Meta da Conferência e remonte (caixas por hora)</label><input id="c-g2" type="number" min="1">
  <label>Remonte: contar apenas produtos congelados?</label><select id="c-sk"><option value="0">Não, contar tudo o que foi remontado</option><option value="1">Sim, somente produtos congelados</option></select>
  <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><button class="btn" id="lp">Carregar lista de produtos congelados</button><span class="mu" id="ls"></span></div>
@@ -221,19 +229,41 @@ function loadList(f){
 var fl=document.getElementById("i2");
 document.getElementById("lp").onclick=function(){fl.click()};
 fl.onchange=function(e){loadList(e.target.files[0]);e.target.value=""};
+var L={1:[],2:[]},MTAB=1,HL={};
+function pm(t){var seen={},out=[];String(t||"").split(/[^0-9A-Za-z]+/).forEach(function(x){if(x&&!seen[x]){seen[x]=1;out.push(x)}});return out}
+function nomes(){var o={};(RR||[]).forEach(function(r){o[r.m]=r.n});return o}
+function drawM(){
+ var q=(document.getElementById("mq").value||"").trim().toLowerCase(),nm=nomes(),a=L[MTAB];
+ var f=a.filter(function(m){return !q||m.indexOf(q)>=0||(nm[m]||"").toLowerCase().indexOf(q)>=0});
+ document.getElementById("mc").textContent=(q?f.length+" resultado(s) de ":"")+a.length+" matrícula(s) na lista";
+ document.getElementById("ml").innerHTML=f.map(function(m){return '<div class="mr'+(HL[m]?" hl":"")+'"><span>'+m+'</span><b>'+(nm[m]?short(nm[m]):"—")+'</b><span class="mx" data-m="'+m+'">✕</span></div>'}).join("")||'<div class="mu" style="padding:10px">Nenhuma matrícula</div>';
+ document.getElementById("mt1").className="btn"+(MTAB===1?" on":"");document.getElementById("mt2").className="btn"+(MTAB===2?" on":"");
+ document.getElementById("mt1").textContent="Separação ("+L[1].length+")";document.getElementById("mt2").textContent="Conferência e remonte ("+L[2].length+")"}
+function addM(){
+ var ta=document.getElementById("mp"),it=pm(ta.value),add=0,dup=0,bad=[];
+ HL={};
+ it.forEach(function(x){if(!/^\d{3,8}$/.test(x)){bad.push(x);return}if(L[MTAB].indexOf(x)>=0){dup++;HL[x]=1;return}L[MTAB].push(x);add++});
+ ta.value="";document.getElementById("mq").value="";
+ document.getElementById("mm").textContent=add+" incluída(s) · "+dup+" já estavam na lista · "+bad.length+" inválida(s)"+(bad.length?" ("+bad.slice(0,3).join(", ")+")":"");
+ drawM()}
+document.getElementById("ma").onclick=addM;
+document.getElementById("mq").oninput=function(){HL={};drawM()};
+document.getElementById("mt1").onclick=function(){MTAB=1;HL={};drawM()};
+document.getElementById("mt2").onclick=function(){MTAB=2;HL={};drawM()};
+document.getElementById("ml").onclick=function(e){var m=e.target.getAttribute&&e.target.getAttribute("data-m");if(m){L[MTAB]=L[MTAB].filter(function(x){return x!==m});HL={};drawM()}};
 var ov=document.getElementById("ov");
 document.getElementById("cf").onclick=function(){
- document.getElementById("c-th").value=cfg.th;document.getElementById("c-pf").value=cfg.pf;document.getElementById("c-m1").value=cfg.m1;document.getElementById("c-m2").value=cfg.m2;
+ document.getElementById("c-th").value=cfg.th;document.getElementById("c-pf").value=cfg.pf;L[1]=pm(cfg.m1);L[2]=pm(cfg.m2);MTAB=1;HL={};document.getElementById("mq").value="";document.getElementById("mp").value="";document.getElementById("mm").textContent="";drawM();
  document.getElementById("c-g1").value=cfg.g1;document.getElementById("c-g2").value=cfg.g2;document.getElementById("c-sk").value=cfg.sk;document.getElementById("c-al").value=cfg.al;document.getElementById("c-ap").value=cfg.ap;showLs();ov.classList.add("on")};
 document.getElementById("cl").onclick=function(){ov.classList.remove("on")};
 document.getElementById("sv").onclick=function(){
- cfg.th=document.getElementById("c-th").value;cfg.pf=document.getElementById("c-pf").value.trim()||"CC, CRR";cfg.m1=document.getElementById("c-m1").value;cfg.m2=document.getElementById("c-m2").value;
+ cfg.th=document.getElementById("c-th").value;cfg.pf=document.getElementById("c-pf").value.trim()||"CC, CRR";cfg.m1=L[1].join(",");cfg.m2=L[2].join(",");
  cfg.g1=+document.getElementById("c-g1").value||100;cfg.g2=+document.getElementById("c-g2").value||100;cfg.sk=document.getElementById("c-sk").value;cfg.al=document.getElementById("c-al").value;cfg.ap=+document.getElementById("c-ap").value||70;
  ["th","m1","m2","g1","g2","sk","al"].forEach(function(k){sv(k,cfg[k])});sv("ap2",cfg.ap);sv("pfx",cfg.pf);
  applyTheme();ov.classList.remove("on");
  saveCfg();if(RR)recompute(false);else render()};
 var KEY=ld("key",""),lastSig="",saving=false,syncMsg="";
-function status(){var e=document.getElementById("dm");if(e)e.textContent=(demo?"· Modo demonstração":(!API?"· Servidor não configurado":(conn==="off"?"· Sem conexão":"· Online")))+(syncMsg?" · "+syncMsg:"")+" · v3"}
+function status(){var e=document.getElementById("dm");if(e)e.textContent=(demo?"· Modo demonstração":(!API?"· Servidor não configurado":(conn==="off"?"· Sem conexão":"· Online")))+(syncMsg?" · "+syncMsg:"")+" · v4"}
 function applyPerm(){CAN=!!KEY||!API;["f1","cf"].forEach(function(i){document.getElementById(i).style.display=CAN?"":"none"});document.getElementById("lk").style.display=(CAN||!API)?"none":""}
 function post(part,data){
  if(!API||!KEY)return Promise.resolve(false);
